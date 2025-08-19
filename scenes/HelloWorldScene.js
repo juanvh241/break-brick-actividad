@@ -16,31 +16,54 @@ export default class HelloWorldScene extends Phaser.Scene {
 
   preload() {
     // load assets
-    this.load.image("sky", "./assets/space3.png");
-    this.load.image("logo", "./assets/phaser3-logo.png");
-    this.load.image("red", "./assets/particles/red.png");
+    this.load.image("sky", "public/assets/space3.png");
+    this.load.image("logo", "public/assets/phaser3-logo.png");
+    this.load.image("red", "public/assets/particles/red.png");
   }
 
-  create() {
-    // create game objects
-    this.add.image(400, 300, "sky");
+create() {
+  this.add.image(400, 300, "sky");
 
-    const logo = this.physics.add.image(400, 100, "logo");
-    logo.setVelocity(100, 200);
-    logo.setBounce(1, 1);
-    logo.setCollideWorldBounds(true);
+  // --- Pala ---
+  this.pala = this.add.rectangle(400, 500, 200, 30, 0x00ff00);
+  this.physics.add.existing(this.pala);
+  this.pala.body.setCollideWorldBounds(true);
+  this.pala.body.setImmovable(true);
+  this.pala.body.allowGravity = false;
+  this.cursors = this.input.keyboard.createCursorKeys();
 
-    // emmit particles from logo
-    const emitter = this.add.particles(0, 0, "red", {
-      speed: 100,
-      scale: { start: 1, end: 0 },
-      blendMode: "ADD",
-    });
+  // --- Grupo de bloques ---
+  this.blocks = this.physics.add.staticGroup();
 
-    emitter.startFollow(logo);
+  for (let i = 0; i < 10; i++) {
+    // Creamos cada bloque como un GameObject con física estática
+    const block = this.add.rectangle(80 + i * 70, 100, 60, 20, 0x0000ff);
+    this.physics.add.existing(block, true); // true = cuerpo estático
+    this.blocks.add(block);
   }
 
-  update() {
-    // update game objects
+  // --- Pelota ---
+  this.ball = this.physics.add.image(400, 300, "red");
+  this.ball.setBounce(1);
+  this.ball.setCollideWorldBounds(true);
+  this.ball.setVelocity(200, 200);
+  this.ball.setScale(0.5);
+
+  // --- Colisiones ---
+  this.physics.add.collider(this.ball, this.pala);
+  this.physics.add.collider(this.ball, this.blocks, (ball, block) => {
+    block.destroy(); // destruir bloque al golpearlo
+  });
+}
+
+update() {
+  this.pala.body.setVelocityX(0);
+
+  if (this.cursors.left.isDown) {
+    this.pala.body.setVelocityX(-300);
+  } else if (this.cursors.right.isDown) {
+    this.pala.body.setVelocityX(300);
   }
+}
+
 }
